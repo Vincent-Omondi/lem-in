@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	lem "github.com/Vincent-Omondi/lem-in/funcs"
+	lem "github.com/Vincent-Omondi/lem-in/pkg"
 )
 
 func main() {
