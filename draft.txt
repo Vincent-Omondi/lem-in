@@ -1,0 +1,358 @@
+package main
+
+import (
+	"log"
+	"os"
+
+	lem "github.com/Vincent-Omondi/lem-in/pkg"
+)
+
+func main() {
+	lem.ValidData(lem.ValidArgs(os.Args))
+	validways := lem.Search()
+	if len(validways) == 0 || lem.Ants == 0 {
+		log.Fatal("ERROR: invalid data format")
+	}
+	os.Stdout.Write(lem.Graphoverview)
+	lem.Sendants(validways)
+}
+
+
+package lem
+
+import (
+	"bufio"
+	"os"
+)
+
+func ReadFile(file *os.File) ([]string, error) {
+	defer file.Close()
+	var content []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		content = append(content, scanner.Text())
+	}
+	return content, scanner.Err()
+}
+
+
+package lem
+
+var (
+	Ways          = make(map[string][]string)
+	Emptyroom     = make(map[string]bool)
+	Rooms         = []string{}
+	Start, End    string
+	Ants          int
+	Graphoverview []byte
+)
+
+
+package lem
+
+import (
+	"log"
+	"os"
+	"strconv"
+	"strings"
+)
+
+// ValidArgs checks if command line arguments are valid and opens the file
+func ValidArgs(args []string) *os.File {
+    if len(args) != 2 {
+        return nil
+    }
+    data, err := os.Open(args[1])
+    if err != nil {
+        return nil
+    }
+    return data
+}
+
+// ValidateStartEndRoom validates start/end room format
+func ValidateStartEndRoom(roomData string) string {
+    room := strings.Split(roomData, " ")[0]
+    if len(strings.Split(roomData, " ")) != 3 {
+        log.Fatal("invalid input for room")
+    }
+    if room[0] == 'L' {
+        log.Fatal("room name cant start with 'L'")
+    }
+    return room
+}
+
+// ProcessRoom handles regular room data
+func ProcessRoom(roomData string) string {
+    room := strings.Split(roomData, " ")[0]
+    if len(strings.Split(roomData, " ")) != 3 {
+        log.Fatal("invalid room data")
+    }
+    if room[0] == 'L' {
+        log.Fatal("room name cant start with 'L'")
+    }
+    return room
+}
+
+// ProcessConnection adds connection between rooms to Ways map
+func ProcessConnection(connection string, Ways map[string][]string) {
+    parts := strings.Split(connection, "-")
+    Ways[parts[0]] = append(Ways[parts[0]], parts[1])
+    Ways[parts[1]] = append(Ways[parts[1]], parts[0])
+}
+
+// ValidateCommand validates special commands like ##start and ##end
+func ValidateCommand(cmd string) bool {
+    if strings.HasPrefix(cmd, "##") {
+        if cmd[2:] != "start" && cmd[2:] != "end" {
+            log.Fatal("invalid msg")
+        }
+        return true
+    }
+    return false
+}
+
+// ProcessAnts validates and converts ants number
+func ProcessAnts(value string) int {
+    ants, err := strconv.Atoi(value)
+    if err != nil {
+        log.Fatal("invalid ants number")
+    }
+    return ants
+}
+
+// ValidData processes and validates the input file
+func ValidData(file *os.File) error {
+    data, err := ReadFile(file)
+    if err != nil {
+        return err
+    }
+
+    for i := 0; i < len(data); i++ {
+        v := data[i]
+        
+        // Skip comments
+        if strings.HasPrefix(v, "#") && !strings.HasPrefix(v, "##") {
+            continue
+        }
+
+        // Update overview
+        Graphoverview = append(Graphoverview, data[i]...)
+        Graphoverview = append(Graphoverview, '\n')
+
+        // Process first line (ants number)
+        if i == 0 {
+            Ants = ProcessAnts(v)
+            continue
+        }
+
+        // Process start command
+        if v == "##start" {
+            if i == len(data)-1 {
+                log.Fatal("end or start room missing")
+            }
+            Start = ValidateStartEndRoom(data[i+1])
+            Rooms = append(Rooms, Start)
+            i++
+            continue
+        }
+
+        // Process end command
+        if v == "##end" {
+            if i == len(data)-1 {
+                log.Fatal("end or start room missing")
+            }
+            End = ValidateStartEndRoom(data[i+1])
+            Rooms = append(Rooms, End)
+            i++
+            continue
+        }
+
+        // Process room or connection
+        if strings.Contains(v, " ") {
+            room := ProcessRoom(v)
+            Rooms = append(Rooms, room)
+        } else if strings.Contains(v, "-") {
+            ProcessConnection(v, Ways)
+        }
+    }
+
+    // Validate start and end rooms exist
+    if Start == "" || End == "" {
+        log.Fatal("end or start room missing")
+    }
+
+    Graphoverview = append(Graphoverview, '\n')
+    return nil
+}
+
+package lem
+
+import "fmt"
+
+func Search() [][]string {
+	aaa := [][]string{}
+	for _, v := range Ways[Start] {
+		eee, deadend := Bfs(v)
+		if !deadend {
+			aaa = append(aaa, eee)
+		}
+	}
+	sort(aaa)
+	return aaa
+}
+
+func sort(unsorted [][]string) [][]string {
+	for i := 0; i < len(unsorted); i++ {
+		for j := i + 1; j < len(unsorted); j++ {
+			if len(unsorted[i]) >= len(unsorted[j]) {
+				unsorted[i], unsorted[j] = unsorted[j], unsorted[i]
+			}
+		}
+	}
+	return unsorted
+}
+
+func Bfs(s string) ([]string, bool) {
+	levels := [][]string{Ways[Start]}
+	if s == End {
+		levels = append(levels, []string{End})
+		return findway(levels), false
+
+	}
+	visited := make(map[string]bool)
+	visited[Start] = true
+	visited[s] = true
+	tovisit := []string{s}
+	for i := 0; i < len(tovisit); i++ {
+		levl := []string{}
+		visiting := tovisit[i]
+		visited[visiting] = true
+		for _, v := range Ways[visiting] {
+			if !visited[v] {
+				tovisit = append(tovisit, v)
+				visited[v] = true
+				levl = append(levl, v)
+			}
+			if v == End {
+				return findway(levels), false
+			}
+
+		}
+		levels = append(levels, levl)
+	}
+	return nil, true
+}
+
+func findway(levels [][]string) []string {
+	curent := End
+	way := []string{curent}
+	for i := len(levels) - 1; i >= 0; i-- {
+		for _, v := range levels[i] {
+			if exist(v, curent) {
+				way = append(way, v)
+				curent = v
+			}
+		}
+	}
+	fmt.Println(way)
+	//closeways(way[1:])
+	way = append(way, Start)
+	return flip(way)
+}
+
+func flip(s []string) []string {
+	r := []string{}
+	for i := len(s) - 1; i >= 0; i-- {
+		r = append(r, s[i])
+	}
+	return r
+}
+
+func exist(s, v string) bool {
+	for _, t := range Ways[s] {
+		if t == v {
+			return true
+		}
+	}
+	return false
+}
+
+func closeways(way []string) {
+	for _, room := range way {
+		for _, v := range Ways[room] {
+			i := -1
+			for o, x := range Ways[v] {
+				if x == room {
+					fmt.Println(room)
+					i = o
+					break
+				}
+			}
+			if i != -1 {
+				Ways[v] = append(Ways[v][:i], Ways[v][i+1:]...)
+			}
+		}
+	}
+}
+
+
+package lem
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func Sendants(ways [][]string) {
+	antgroups := [][]string{}
+	antid := 1
+	for i := 0; i < len(ways); i++ {
+		antgroup := []string{}
+		for j := 0; j < Ants/len(ways); j++ {
+			if antid > Ants {
+				break
+			}
+			antgroup = append(antgroup, "L"+strconv.Itoa(antid))
+			antid++
+
+		}
+		if i == 0 && antid < Ants {
+			antgroup = append(antgroup, "L"+strconv.Itoa(antid))
+			antid++
+		}
+		antgroups = append(antgroups, antgroup)
+	}
+	controltrafic(antgroups, ways)
+}
+
+func controltrafic(antgroups, ways [][]string) {
+	trafic := make(map[string]int)
+	unavailablerooms := make(map[string]bool)
+	finished := []string{}
+	for len(finished) != Ants {
+		for i := 0; i < len(ways); i++ {
+			unavailablerooms[End] = false
+			for s := 0; s < len(antgroups[i]); s++ {
+				ant := antgroups[i][s]
+				if !unavailablerooms[ways[i][trafic[ant]+1]] {
+					if ways[i][trafic[ant]+1] == End {
+						unavailablerooms[ways[i][trafic[ant]]] = false
+						finished = append(finished, ant)
+						delete(trafic, ant)
+						antgroups[i] = append(antgroups[i][:s], antgroups[i][s+1:]...)
+						fmt.Printf("%v-%v ", ant, End)
+						s--
+						unavailablerooms[End] = true
+						continue
+					} else {
+						fmt.Printf("%v-%v ", ant, ways[i][trafic[ant]+1])
+						unavailablerooms[ways[i][trafic[ant]+1]] = true
+						unavailablerooms[ways[i][trafic[ant]]] = false
+						trafic[ant]++
+					}
+				}
+			}
+		}
+		fmt.Println()
+	}
+}
