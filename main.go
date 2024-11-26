@@ -4,15 +4,15 @@ import (
 	"log"
 	"os"
 
-	lem "github.com/Vincent-Omondi/lem-in/pkg"
+	pkg "github.com/Vincent-Omondi/lem-in/pkg"
 )
 
 func main() {
-	lem.ValidData(lem.ValidArgs(os.Args))
-	validways := lem.Search()
-	if len(validways) == 0 || lem.Ants == 0 {
+	pkg.ProcessInputFile(pkg.OpenFileIfArgsValid(os.Args))
+	validways := pkg.FindPaths()
+	if len(validways) == 0 || pkg.AntsCount == 0 {
 		log.Fatal("ERROR: invalid data format")
 	}
-	os.Stdout.Write(lem.Graphoverview)
-	lem.Sendants(validways)
+	os.Stdout.Write(pkg.Graphoverview)
+	pkg.DispatchAnts(validways)
 }
