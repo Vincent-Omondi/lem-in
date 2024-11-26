@@ -1,109 +1,110 @@
-package lem
+package pkg
 
 import "fmt"
 
-func Search() [][]string {
-	aaa := [][]string{}
-	for _, v := range Ways[Start] {
-		eee, deadend := Bfs(v)
-		if !deadend {
-			aaa = append(aaa, eee)
+func FindPaths() [][]string {
+	var validPaths [][]string
+	for _, neighbor := range RoomConnections[StartRoom] {
+		path, isDeadEnd := TraverseGraph(neighbor)
+		if !isDeadEnd {
+			validPaths = append(validPaths, path)
 		}
 	}
-	sort(aaa)
-	return aaa
+	return SortPathsByLength(validPaths)
 }
 
-func sort(unsorted [][]string) [][]string {
-	for i := 0; i < len(unsorted); i++ {
-		for j := i + 1; j < len(unsorted); j++ {
-			if len(unsorted[i]) >= len(unsorted[j]) {
-				unsorted[i], unsorted[j] = unsorted[j], unsorted[i]
+func SortPathsByLength(paths [][]string) [][]string {
+	for i := 0; i < len(paths); i++ {
+		for j := i + 1; j < len(paths); j++ {
+			if len(paths[i]) >= len(paths[j]) {
+				paths[i], paths[j] = paths[j], paths[i]
 			}
 		}
 	}
-	return unsorted
+	return paths
 }
 
-func Bfs(s string) ([]string, bool) {
-	levels := [][]string{Ways[Start]}
-	if s == End {
-		levels = append(levels, []string{End})
-		return findway(levels), false
-
+func TraverseGraph(startNode string) ([]string, bool) {
+	levels := [][]string{RoomConnections[StartRoom]}
+	if startNode == EndRoom {
+		levels = append(levels, []string{EndRoom})
+		return BuildPath(levels), false
 	}
-	visited := make(map[string]bool)
-	visited[Start] = true
-	visited[s] = true
-	tovisit := []string{s}
-	for i := 0; i < len(tovisit); i++ {
-		levl := []string{}
-		visiting := tovisit[i]
-		visited[visiting] = true
-		for _, v := range Ways[visiting] {
-			if !visited[v] {
-				tovisit = append(tovisit, v)
-				visited[v] = true
-				levl = append(levl, v)
-			}
-			if v == End {
-				return findway(levels), false
-			}
 
+	visitedRooms := make(map[string]bool)
+	visitedRooms[StartRoom] = true
+	visitedRooms[startNode] = true
+	nodesToVisit := []string{startNode}
+
+	for i := 0; i < len(nodesToVisit); i++ {
+		currentLevel := []string{}
+		currentNode := nodesToVisit[i]
+		visitedRooms[currentNode] = true
+
+		for _, neighbor := range RoomConnections[currentNode] {
+			if !visitedRooms[neighbor] {
+				nodesToVisit = append(nodesToVisit, neighbor)
+				visitedRooms[neighbor] = true
+				currentLevel = append(currentLevel, neighbor)
+			}
+			if neighbor == EndRoom {
+				return BuildPath(levels), false
+			}
 		}
-		levels = append(levels, levl)
+		levels = append(levels, currentLevel)
 	}
 	return nil, true
 }
 
-func findway(levels [][]string) []string {
-	curent := End
-	way := []string{curent}
+func BuildPath(levels [][]string) []string {
+	currentRoom := EndRoom
+	path := []string{currentRoom}
+
 	for i := len(levels) - 1; i >= 0; i-- {
-		for _, v := range levels[i] {
-			if exist(v, curent) {
-				way = append(way, v)
-				curent = v
+		for _, room := range levels[i] {
+			if IsConnected(room, currentRoom) {
+				path = append(path, room)
+				currentRoom = room
 			}
 		}
 	}
-	fmt.Println(way)
-	//closeways(way[1:])
-	way = append(way, Start)
-	return flip(way)
+
+	fmt.Println(path)
+	path = append(path, StartRoom)
+	return ReversePath(path)
 }
 
-func flip(s []string) []string {
-	r := []string{}
-	for i := len(s) - 1; i >= 0; i-- {
-		r = append(r, s[i])
+func ReversePath(path []string) []string {
+	reversed := []string{}
+	for i := len(path) - 1; i >= 0; i-- {
+		reversed = append(reversed, path[i])
 	}
-	return r
+	return reversed
 }
 
-func exist(s, v string) bool {
-	for _, t := range Ways[s] {
-		if t == v {
+func IsConnected(roomA, roomB string) bool {
+	for _, neighbor := range RoomConnections[roomA] {
+		if neighbor == roomB {
 			return true
 		}
 	}
 	return false
 }
 
-func closeways(way []string) {
-	for _, room := range way {
-		for _, v := range Ways[room] {
-			i := -1
-			for o, x := range Ways[v] {
-				if x == room {
-					fmt.Println(room)
-					i = o
-					break
-				}
-			}
-			if i != -1 {
-				Ways[v] = append(Ways[v][:i], Ways[v][i+1:]...)
-			}
-		}
-	}
-}
+// Uncomment and use this function if required to close paths after processing
+// func ClosePaths(path []string) {
+// 	for _, room := range path {
+// 		for _, neighbor := range RoomConnections[room] {
+// 			index := -1
+// 			for i, connectedRoom := range RoomConnections[neighbor] {
+// 				if connectedRoom == room {
+// 					index = i
+// 					break
+// 				}
+// 			}
+// 			if index != -1 {
+// 				RoomConnections[neighbor] = append(RoomConnections[neighbor][:index], RoomConnections[neighbor][index+1:]...)
+// 			}
+// 		}
+// 	}
+// }
