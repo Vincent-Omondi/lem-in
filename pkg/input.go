@@ -1,136 +1,184 @@
-package lem
+package pkg
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 )
 
-// ValidArgs checks if command line arguments are valid and opens the file
-func ValidArgs(args []string) *os.File {
-    if len(args) != 2 {
-        return nil
-    }
-    data, err := os.Open(args[1])
-    if err != nil {
-        return nil
-    }
-    return data
+// Initialize global variables
+func init() {
+	RoomConnections = make(map[string][]string)
 }
 
-// ValidateStartEndRoom validates start/end room format
-func ValidateStartEndRoom(roomData string) string {
-    room := strings.Split(roomData, " ")[0]
-    if len(strings.Split(roomData, " ")) != 3 {
-        log.Fatal("invalid input for room")
-    }
-    if room[0] == 'L' {
-        log.Fatal("room name cant start with 'L'")
-    }
-    return room
+// OpenFileIfArgsValid validates the command-line arguments and opens the specified file
+func OpenFileIfArgsValid(arguments []string) *os.File {
+	if len(arguments) != 2 {
+		fmt.Println("Usage: program <input_file>")
+		os.Exit(1)
+	}
+	
+	file, err := os.Open(arguments[1])
+	if err != nil {
+		fmt.Printf("Error opening file: %v\n", err)
+		os.Exit(1)
+	}
+	
+	return file
 }
 
-// ProcessRoom handles regular room data
-func ProcessRoom(roomData string) string {
-    room := strings.Split(roomData, " ")[0]
-    if len(strings.Split(roomData, " ")) != 3 {
-        log.Fatal("invalid room data")
-    }
-    if room[0] == 'L' {
-        log.Fatal("room name cant start with 'L'")
-    }
-    return room
+// ValidateRoomName validates the format of a start or end room name
+func ValidateRoomName(roomDetails string) string {
+	parts := strings.Split(roomDetails, " ")
+	if len(parts) != 3 {
+		log.Fatal("invalid input for room: incorrect number of parts")
+	}
+	
+	roomName := parts[0]
+	if roomName[0] == 'L' {
+		log.Fatal("room name cannot start with 'L'")
+	}
+	
+	return roomName
 }
 
-// ProcessConnection adds connection between rooms to Ways map
-func ProcessConnection(connection string, Ways map[string][]string) {
-    parts := strings.Split(connection, "-")
-    Ways[parts[0]] = append(Ways[parts[0]], parts[1])
-    Ways[parts[1]] = append(Ways[parts[1]], parts[0])
+// ParseRoom parses and validates the format of a standard room entry
+func ParseRoom(roomDetails string) string {
+	parts := strings.Split(roomDetails, " ")
+	if len(parts) != 3 {
+		log.Fatal("invalid room data: incorrect number of parts")
+	}
+	
+	roomName := parts[0]
+	if roomName[0] == 'L' {
+		log.Fatal("room name cannot start with 'L'")
+	}
+	
+	return roomName
 }
 
-// ValidateCommand validates special commands like ##start and ##end
-func ValidateCommand(cmd string) bool {
-    if strings.HasPrefix(cmd, "##") {
-        if cmd[2:] != "start" && cmd[2:] != "end" {
-            log.Fatal("invalid msg")
-        }
-        return true
-    }
-    return false
+// AddRoomConnection adds a connection between two rooms to the adjacency map
+func AddRoomConnection(connectionDetails string) {
+	rooms := strings.Split(connectionDetails, "-")
+	if len(rooms) != 2 {
+		log.Fatalf("Invalid room connection format: %s", connectionDetails)
+	}
+	
+	// Ensure rooms exist in the map
+	if _, exists := RoomConnections[rooms[0]]; !exists {
+		RoomConnections[rooms[0]] = []string{}
+	}
+	if _, exists := RoomConnections[rooms[1]]; !exists {
+		RoomConnections[rooms[1]] = []string{}
+	}
+	
+	// Add bidirectional connections
+	RoomConnections[rooms[0]] = append(RoomConnections[rooms[0]], rooms[1])
+	RoomConnections[rooms[1]] = append(RoomConnections[rooms[1]], rooms[0])
 }
 
-// ProcessAnts validates and converts ants number
-func ProcessAnts(value string) int {
-    ants, err := strconv.Atoi(value)
-    if err != nil {
-        log.Fatal("invalid ants number")
-    }
-    return ants
+// IsSpecialCommand checks if a line is a valid special command
+func IsSpecialCommand(command string) bool {
+	if strings.HasPrefix(command, "##") {
+		if command[2:] != "start" && command[2:] != "end" {
+			log.Fatal("invalid special command")
+		}
+		return true
+	}
+	return false
 }
 
-// ValidData processes and validates the input file
-func ValidData(file *os.File) error {
-    data, err := ReadFile(file)
-    if err != nil {
-        return err
-    }
+// ParseAntsCount validates and converts the number of ants from a string to an integer
+func ParseAntsCount(antsString string) int {
+	ants, err := strconv.Atoi(antsString)
+	if err != nil || ants <= 0 {
+		log.Fatal("invalid ants number: must be a positive integer")
+	}
+	return ants
+}
 
-    for i := 0; i < len(data); i++ {
-        v := data[i]
-        
-        // Skip comments
-        if strings.HasPrefix(v, "#") && !strings.HasPrefix(v, "##") {
-            continue
-        }
+// ProcessInputFile reads, validates, and processes the input file
+func ProcessInputFile(inputFile *os.File) error {
+	// Reset global variables
+	AntsCount = 0
+	StartRoom = ""
+	EndRoom = ""
+	RoomList = []string{}
+	Graphoverview = []byte{}
+	RoomConnections = make(map[string][]string)
 
-        // Update overview
-        Graphoverview = append(Graphoverview, data[i]...)
-        Graphoverview = append(Graphoverview, '\n')
+	// Read file contents
+	fileContent, err := ReadFile(inputFile)
+	if err != nil {
+		return err
+	}
 
-        // Process first line (ants number)
-        if i == 0 {
-            Ants = ProcessAnts(v)
-            continue
-        }
+	// Process each line
+	for i := 0; i < len(fileContent); i++ {
+		line := fileContent[i]
 
-        // Process start command
-        if v == "##start" {
-            if i == len(data)-1 {
-                log.Fatal("end or start room missing")
-            }
-            Start = ValidateStartEndRoom(data[i+1])
-            Rooms = append(Rooms, Start)
-            i++
-            continue
-        }
+		// Skip pure comments
+		if strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "##") {
+			continue
+		}
 
-        // Process end command
-        if v == "##end" {
-            if i == len(data)-1 {
-                log.Fatal("end or start room missing")
-            }
-            End = ValidateStartEndRoom(data[i+1])
-            Rooms = append(Rooms, End)
-            i++
-            continue
-        }
+		// Append to graph overview
+		Graphoverview = append(Graphoverview, []byte(line)...)
+		Graphoverview = append(Graphoverview, '\n')
 
-        // Process room or connection
-        if strings.Contains(v, " ") {
-            room := ProcessRoom(v)
-            Rooms = append(Rooms, room)
-        } else if strings.Contains(v, "-") {
-            ProcessConnection(v, Ways)
-        }
-    }
+		// Process first line as the number of ants
+		if i == 0 {
+			AntsCount = ParseAntsCount(line)
+			continue
+		}
 
-    // Validate start and end rooms exist
-    if Start == "" || End == "" {
-        log.Fatal("end or start room missing")
-    }
+		// Process special commands
+		if line == "##start" {
+			if i+1 >= len(fileContent) {
+				log.Fatal("missing room after ##start command")
+			}
+			StartRoom = ValidateRoomName(fileContent[i+1])
+			RoomList = append(RoomList, StartRoom)
+			i++
+			continue
+		}
 
-    Graphoverview = append(Graphoverview, '\n')
-    return nil
+		if line == "##end" {
+			if i+1 >= len(fileContent) {
+				log.Fatal("missing room after ##end command")
+			}
+			EndRoom = ValidateRoomName(fileContent[i+1])
+			RoomList = append(RoomList, EndRoom)
+			i++
+			continue
+		}
+
+		// Process room entries
+		if strings.Contains(line, " ") {
+			roomName := ParseRoom(line)
+			RoomList = append(RoomList, roomName)
+		} else if strings.Contains(line, "-") {
+			// Process room connections
+			AddRoomConnection(line)
+		}
+	}
+
+	// Validate input requirements
+	if AntsCount == 0 {
+		log.Fatal("no ants specified")
+	}
+	if StartRoom == "" {
+		log.Fatal("no start room specified")
+	}
+	if EndRoom == "" {
+		log.Fatal("no end room specified")
+	}
+	if len(RoomConnections) == 0 {
+		log.Fatal("no room connections specified")
+	}
+
+	Graphoverview = append(Graphoverview, '\n')
+	return nil
 }
