@@ -1,3 +1,4 @@
+// globals.go
 package pkg
 
 var (

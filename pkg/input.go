@@ -1,3 +1,4 @@
+// input.go
 package pkg
 
 import (
@@ -141,7 +142,6 @@ func ProcessInputFile(inputFile *os.File) error {
 			}
 			StartRoom = ValidateRoomName(fileContent[i+1])
 			RoomList = append(RoomList, StartRoom)
-			i++
 			continue
 		}
 
@@ -151,7 +151,6 @@ func ProcessInputFile(inputFile *os.File) error {
 			}
 			EndRoom = ValidateRoomName(fileContent[i+1])
 			RoomList = append(RoomList, EndRoom)
-			i++
 			continue
 		}
 

@@ -1,6 +1,5 @@
+// pathfinder.go
 package pkg
-
-import "fmt"
 
 func FindPaths() [][]string {
 	var validPaths [][]string
@@ -65,13 +64,17 @@ func BuildPath(levels [][]string) []string {
 			if IsConnected(room, currentRoom) {
 				path = append(path, room)
 				currentRoom = room
+				break // Ensure only one room is added per level
 			}
 		}
 	}
 
-	fmt.Println(path)
 	path = append(path, StartRoom)
-	return ReversePath(path)
+	finalPath := ReversePath(path)
+
+	// ClosePaths(finalPath)
+
+	return finalPath
 }
 
 func ReversePath(path []string) []string {
@@ -91,20 +94,19 @@ func IsConnected(roomA, roomB string) bool {
 	return false
 }
 
-// Uncomment and use this function if required to close paths after processing
-// func ClosePaths(path []string) {
-// 	for _, room := range path {
-// 		for _, neighbor := range RoomConnections[room] {
-// 			index := -1
-// 			for i, connectedRoom := range RoomConnections[neighbor] {
-// 				if connectedRoom == room {
-// 					index = i
-// 					break
-// 				}
-// 			}
-// 			if index != -1 {
-// 				RoomConnections[neighbor] = append(RoomConnections[neighbor][:index], RoomConnections[neighbor][index+1:]...)
-// 			}
-// 		}
-// 	}
-// }
+func ClosePaths(path []string) {
+	for _, room := range path {
+		for _, neighbor := range RoomConnections[room] {
+			index := -1
+			for i, connectedRoom := range RoomConnections[neighbor] {
+				if connectedRoom == room {
+					index = i
+					break
+				}
+			}
+			if index != -1 {
+				RoomConnections[neighbor] = append(RoomConnections[neighbor][:index], RoomConnections[neighbor][index+1:]...)
+			}
+		}
+	}
+}
