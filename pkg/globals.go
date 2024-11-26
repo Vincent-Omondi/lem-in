@@ -1,10 +1,10 @@
-package lem
+package pkg
 
 var (
-	Ways          = make(map[string][]string)
-	Emptyroom     = make(map[string]bool)
-	Rooms         = []string{}
-	Start, End    string
-	Ants          int
-	Graphoverview []byte
+	Graphoverview    []byte                 // Stores the overview of the graph as a byte array
+	AntsCount        int                    // Stores the number of ants
+	RoomList         []string               // Stores the list of room names
+	RoomConnections  map[string][]string    // Stores room connections as an adjacency list
+	StartRoom        string                 // Stores the start room name
+	EndRoom          string                 // Stores the end room name
 )
