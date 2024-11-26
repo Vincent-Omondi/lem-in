@@ -1,4 +1,4 @@
-package lem
+package pkg
 
 import (
 	"bufio"
