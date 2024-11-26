@@ -1,56 +1,68 @@
-package lem
+package pkg
 
 import (
 	"fmt"
 	"strconv"
 )
 
-func Sendants(ways [][]string) {
-	antgroups := [][]string{}
-	antid := 1
-	for i := 0; i < len(ways); i++ {
-		antgroup := []string{}
-		for j := 0; j < Ants/len(ways); j++ {
-			if antid > Ants {
+func DispatchAnts(paths [][]string) {
+	antGroups := [][]string{}
+	antID := 1
+
+	// Distribute ants among the paths
+	for i := 0; i < len(paths); i++ {
+		antGroup := []string{}
+		// Distribute ants equally among the paths
+		for j := 0; j < AntsCount/len(paths); j++ {
+			if antID > AntsCount {
 				break
 			}
-			antgroup = append(antgroup, "L"+strconv.Itoa(antid))
-			antid++
+			antGroup = append(antGroup, "L"+strconv.Itoa(antID))
+			antID++
+		}
 
+		// If there are remaining ants, assign them to the first path
+		if i == 0 && antID <= AntsCount {
+			antGroup = append(antGroup, "L"+strconv.Itoa(antID))
+			antID++
 		}
-		if i == 0 && antid < Ants {
-			antgroup = append(antgroup, "L"+strconv.Itoa(antid))
-			antid++
-		}
-		antgroups = append(antgroups, antgroup)
+		antGroups = append(antGroups, antGroup)
 	}
-	controltrafic(antgroups, ways)
+	ControlTraffic(antGroups, paths)
 }
 
-func controltrafic(antgroups, ways [][]string) {
-	trafic := make(map[string]int)
-	unavailablerooms := make(map[string]bool)
-	finished := []string{}
-	for len(finished) != Ants {
-		for i := 0; i < len(ways); i++ {
-			unavailablerooms[End] = false
-			for s := 0; s < len(antgroups[i]); s++ {
-				ant := antgroups[i][s]
-				if !unavailablerooms[ways[i][trafic[ant]+1]] {
-					if ways[i][trafic[ant]+1] == End {
-						unavailablerooms[ways[i][trafic[ant]]] = false
-						finished = append(finished, ant)
-						delete(trafic, ant)
-						antgroups[i] = append(antgroups[i][:s], antgroups[i][s+1:]...)
-						fmt.Printf("%v-%v ", ant, End)
-						s--
-						unavailablerooms[End] = true
+func ControlTraffic(antGroups, paths [][]string) {
+	traffic := make(map[string]int)          // Tracks the current position of each ant
+	unavailableRooms := make(map[string]bool) // Tracks which rooms are unavailable
+	completedAnts := []string{}              // Tracks completed ants
+
+	// Continue until all ants have reached the end
+	for len(completedAnts) != AntsCount {
+		for i := 0; i < len(paths); i++ {
+			unavailableRooms[EndRoom] = false
+
+			// Move each ant along its path
+			for s := 0; s < len(antGroups[i]); s++ {
+				ant := antGroups[i][s]
+
+				// Check if the next room in the path is available
+				if !unavailableRooms[paths[i][traffic[ant]+1]] {
+					if paths[i][traffic[ant]+1] == EndRoom {
+						// If the ant reaches the end, mark it as finished
+						unavailableRooms[paths[i][traffic[ant]]] = false
+						completedAnts = append(completedAnts, ant)
+						delete(traffic, ant)
+						antGroups[i] = append(antGroups[i][:s], antGroups[i][s+1:]...)
+						fmt.Printf("%v-%v ", ant, EndRoom)
+						s-- // Adjust the index since we removed an ant from the group
+						unavailableRooms[EndRoom] = true
 						continue
 					} else {
-						fmt.Printf("%v-%v ", ant, ways[i][trafic[ant]+1])
-						unavailablerooms[ways[i][trafic[ant]+1]] = true
-						unavailablerooms[ways[i][trafic[ant]]] = false
-						trafic[ant]++
+						// Move the ant to the next room in the path
+						fmt.Printf("%v-%v ", ant, paths[i][traffic[ant]+1])
+						unavailableRooms[paths[i][traffic[ant]+1]] = true
+						unavailableRooms[paths[i][traffic[ant]]] = false
+						traffic[ant]++
 					}
 				}
 			}
