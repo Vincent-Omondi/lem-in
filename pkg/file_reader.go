@@ -1,4 +1,3 @@
-// file_reader.go
 package pkg
 
 import (
@@ -6,12 +5,12 @@ import (
 	"os"
 )
 
-func ReadFile(file *os.File) ([]string, error) {
-	defer file.Close()
-	var content []string
-	scanner := bufio.NewScanner(file)
+func ReadFile(inputFile *os.File) ([]string, error) {
+	defer inputFile.Close()
+	var fileContent []string
+	scanner := bufio.NewScanner(inputFile)
 	for scanner.Scan() {
-		content = append(content, scanner.Text())
+		fileContent = append(fileContent, scanner.Text())
 	}
-	return content, scanner.Err()
+	return fileContent, scanner.Err()
 }

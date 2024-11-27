@@ -1,11 +1,22 @@
-// globals.go
 package pkg
 
 var (
-	Graphoverview    []byte                 // Stores the overview of the graph as a byte array
-	AntsCount        int                    // Stores the number of ants
-	RoomList         []string               // Stores the list of room names
-	RoomConnections  map[string][]string    // Stores room connections as an adjacency list
-	StartRoom        string                 // Stores the start room name
-	EndRoom          string                 // Stores the end room name
+	RoomConnections = make(map[string][]string)
+	EmptyRoom       = make(map[string]bool)
+	PathRatings     = make(map[int]int)
+	RoomList        = []string{}
+	StartRoom, EndRoom string
+	AntsCount       int
+	Graphoverview   []byte
+)
+
+type PathInfo struct {
+	Rating int
+	Index  int
+}
+
+var (
+	VisitedRooms = make(map[string]bool)
+	ValidPaths   [][]string
+	TraversalStack []string
 )
