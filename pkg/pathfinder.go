@@ -137,19 +137,6 @@ func DepthFirstSearch(currentRoom string) {
 	VisitedRooms[currentRoom] = false
 }
 
-// Additional pathfinding logic
-
-func SearchMax() [][]string {
-	VisitedRooms[StartRoom] = true
-	for i := 0; i < len(RoomConnections[StartRoom]); i++ {
-		node := RoomConnections[StartRoom][i]
-		TraverseGraph(node)
-		fmt.Println(ValidPaths)
-	}
-	SortSolutions()
-	return ValidPaths
-}
-
 func SortSolutions() {
 	sort.Slice(ValidPaths, func(i, j int) bool {
 		// First, sort by the length of the solution
@@ -159,19 +146,6 @@ func SortSolutions() {
 		// If lengths are the same, use the compare function to decide order
 		return compare(ValidPaths[i][1:len(ValidPaths[i])-1], ValidPaths[j][1:len(ValidPaths[j])-1])
 	})
-}
-
-func compare(s1, s2 []string) bool {
-	if len(s1) != len(s2) || len(s1) == 0 || len(s2) == 0 {
-		return false
-	}
-
-	for i, v := range s1 {
-		if s2[i] != v {
-			return false
-		}
-	}
-	return true
 }
 
 func TraverseGraph(startNode string) bool {
