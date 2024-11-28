@@ -1,3 +1,4 @@
+// simulator.go
 package pkg
 
 import (
@@ -8,11 +9,11 @@ import (
 func DispatchAnts(paths [][]string) {
 	antGroups := [][]string{}
 	antID := 1
-
-	// Distribute ants among the paths
+	if len(paths) > AntsCount {
+		paths = paths[:AntsCount]
+	}
 	for i := 0; i < len(paths); i++ {
 		antGroup := []string{}
-		// Distribute ants equally among the paths
 		for j := 0; j < AntsCount/len(paths); j++ {
 			if antID > AntsCount {
 				break
@@ -20,45 +21,44 @@ func DispatchAnts(paths [][]string) {
 			antGroup = append(antGroup, "L"+strconv.Itoa(antID))
 			antID++
 		}
-
-		// If there are remaining ants, assign them to the first path
 		if i == 0 && antID <= AntsCount {
 			antGroup = append(antGroup, "L"+strconv.Itoa(antID))
 			antID++
 		}
 		antGroups = append(antGroups, antGroup)
 	}
+	if antID <= AntsCount {
+		for i := 0; i < len(antGroups); i++ {
+			if antID > AntsCount {
+				break
+			}
+			antGroups[i] = append(antGroups[i], "L"+strconv.Itoa(antID))
+			antID++
+		}
+	}
 	ControlTraffic(antGroups, paths)
 }
 
 func ControlTraffic(antGroups, paths [][]string) {
-	traffic := make(map[string]int)          // Tracks the current position of each ant
-	unavailableRooms := make(map[string]bool) // Tracks which rooms are unavailable
-	completedAnts := []string{}              // Tracks completed ants
-
-	// Continue until all ants have reached the end
+	traffic := make(map[string]int)
+	unavailableRooms := make(map[string]bool)
+	completedAnts := []string{}
 	for len(completedAnts) != AntsCount {
 		for i := 0; i < len(paths); i++ {
 			unavailableRooms[EndRoom] = false
-
-			// Move each ant along its path
 			for s := 0; s < len(antGroups[i]); s++ {
 				ant := antGroups[i][s]
-
-				// Check if the next room in the path is available
 				if !unavailableRooms[paths[i][traffic[ant]+1]] {
 					if paths[i][traffic[ant]+1] == EndRoom {
-						// If the ant reaches the end, mark it as finished
 						unavailableRooms[paths[i][traffic[ant]]] = false
 						completedAnts = append(completedAnts, ant)
 						delete(traffic, ant)
 						antGroups[i] = append(antGroups[i][:s], antGroups[i][s+1:]...)
 						fmt.Printf("%v-%v ", ant, EndRoom)
-						s-- // Adjust the index since we removed an ant from the group
+						s--
 						unavailableRooms[EndRoom] = true
 						continue
 					} else {
-						// Move the ant to the next room in the path
 						fmt.Printf("%v-%v ", ant, paths[i][traffic[ant]+1])
 						unavailableRooms[paths[i][traffic[ant]+1]] = true
 						unavailableRooms[paths[i][traffic[ant]]] = false
@@ -68,5 +68,15 @@ func ControlTraffic(antGroups, paths [][]string) {
 			}
 		}
 		fmt.Println()
+	}
+}
+
+func SortAnts(ants []string) {
+	for i := 0; i < len(ants); i++ {
+		for j := i + 1; j < len(ants); j++ {
+			if ants[j] < ants[i] {
+				ants[j], ants[i] = ants[i], ants[j]
+			}
+		}
 	}
 }
