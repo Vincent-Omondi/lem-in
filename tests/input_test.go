@@ -1,9 +1,11 @@
 // input.go
-package pkg
+package tests
 
 import (
 	"os"
 	"testing"
+
+	"github.com/Vincent-Omondi/lem-in/pkg"
 )
 
 func TestProcessInputFile(t *testing.T) {
@@ -65,7 +67,7 @@ func TestProcessInputFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ProcessInputFile(tt.args.inputFile)
+			got, err := pkg.ProcessInputFile(tt.args.inputFile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProcessInputFile() error = %v, wantErr %v", err, tt.wantErr)
 				return

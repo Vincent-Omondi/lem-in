@@ -1,9 +1,11 @@
 // pathfinder.go
-package pkg
+package tests
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/Vincent-Omondi/lem-in/pkg"
 )
 
 func TestFindPaths(t *testing.T) {
@@ -16,9 +18,9 @@ func TestFindPaths(t *testing.T) {
 			name: "No room connections",
 			setup: func() {
 				// Mock StartRoom and RoomConnections
-				StartRoom = "RoomA"
-				RoomConnections = map[string][]string{}
-				ValidPaths = [][]string{}
+				pkg.StartRoom = "RoomA"
+				pkg.RoomConnections = map[string][]string{}
+				pkg.ValidPaths = [][]string{}
 			},
 			want: [][]string{},
 		},
@@ -26,12 +28,12 @@ func TestFindPaths(t *testing.T) {
 			name: "Single valid path",
 			setup: func() {
 				// Mock StartRoom and RoomConnections
-				StartRoom = "RoomA"
-				RoomConnections = map[string][]string{
+				pkg.StartRoom = "RoomA"
+				pkg.RoomConnections = map[string][]string{
 					"RoomA": {"RoomB"},
 					"RoomB": {},
 				}
-				ValidPaths = [][]string{{"RoomA", "RoomB"}}
+				pkg.ValidPaths = [][]string{{"RoomA", "RoomB"}}
 			},
 			want: [][]string{{"RoomA", "RoomB"}},
 		},
@@ -42,7 +44,7 @@ func TestFindPaths(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup()
 			}
-			if got := FindPaths(); !reflect.DeepEqual(got, tt.want) {
+			if got := pkg.FindPaths(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("FindPaths() = %v, want %v", got, tt.want)
 			}
 		})
@@ -97,13 +99,13 @@ func TestSetPathRatings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ValidPaths = tt.validPaths
-			PathRatings = make(map[int]int)
+			pkg.ValidPaths = tt.validPaths
+			pkg.PathRatings = make(map[int]int)
 
-			SetPathRatings()
+			pkg.SetPathRatings()
 
-			if !reflect.DeepEqual(PathRatings, tt.want) {
-				t.Errorf("SetPathRatings() = %v, want %v", PathRatings, tt.want)
+			if !reflect.DeepEqual(pkg.PathRatings, tt.want) {
+				t.Errorf("SetPathRatings() = %v, want %v", pkg.PathRatings, tt.want)
 			}
 		})
 	}
@@ -163,7 +165,7 @@ func TestArePathsIdentical(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ArePathsIdentical(tt.args.path1, tt.args.path2); got != tt.want {
+			if got := pkg.ArePathsIdentical(tt.args.path1, tt.args.path2); got != tt.want {
 				t.Errorf("ArePathsIdentical() = %v, want %v", got, tt.want)
 			}
 		})
@@ -241,19 +243,19 @@ func TestDepthFirstSearch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up mock data
-			StartRoom = tt.startRoom
-			EndRoom = tt.endRoom
-			RoomConnections = tt.roomConnections
-			TraversalStack = []string{}
-			VisitedRooms = make(map[string]bool)
-			ValidPaths = [][]string{}
+			pkg.StartRoom = tt.startRoom
+			pkg.EndRoom = tt.endRoom
+			pkg.RoomConnections = tt.roomConnections
+			pkg.TraversalStack = []string{}
+			pkg.VisitedRooms = make(map[string]bool)
+			pkg.ValidPaths = [][]string{}
 
 			// Call the function
-			DepthFirstSearch(StartRoom)
+			pkg.DepthFirstSearch(pkg.StartRoom)
 
 			// Verify the result
-			if !reflect.DeepEqual(ValidPaths, tt.wantValidPaths) {
-				t.Errorf("ValidPaths = %v, want %v", ValidPaths, tt.wantValidPaths)
+			if !reflect.DeepEqual(pkg.ValidPaths, tt.wantValidPaths) {
+				t.Errorf("ValidPaths = %v, want %v", pkg.ValidPaths, tt.wantValidPaths)
 			}
 		})
 	}
@@ -334,14 +336,14 @@ func TestTraverseGraph(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up mock data
-			StartRoom = tt.startNode
-			EndRoom = tt.endRoom
-			RoomConnections = tt.roomConnections
-			VisitedRooms = make(map[string]bool)
-			ValidPaths = [][]string{}
+			pkg.StartRoom = tt.startNode
+			pkg.EndRoom = tt.endRoom
+			pkg.RoomConnections = tt.roomConnections
+			pkg.VisitedRooms = make(map[string]bool)
+			pkg.ValidPaths = [][]string{}
 
 			// Call the function
-			got := TraverseGraph(tt.startNode)
+			got := pkg.TraverseGraph(tt.startNode)
 
 			// Validate the return value
 			if got != tt.wantReturn {
@@ -349,8 +351,8 @@ func TestTraverseGraph(t *testing.T) {
 			}
 
 			// Validate ValidPaths
-			if !reflect.DeepEqual(ValidPaths, tt.wantValidPaths) {
-				t.Errorf("ValidPaths = %v, want %v", ValidPaths, tt.wantValidPaths)
+			if !reflect.DeepEqual(pkg.ValidPaths, tt.wantValidPaths) {
+				t.Errorf("ValidPaths = %v, want %v", pkg.ValidPaths, tt.wantValidPaths)
 			}
 		})
 	}
@@ -387,14 +389,14 @@ func Test_sortSolutions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up global ValidPaths
-			ValidPaths = tt.validPaths
+			pkg.ValidPaths = tt.validPaths
 
 			// Call the function
-			sortSolutions()
+			pkg.SortSolutions()
 
 			// Validate the result
-			if !reflect.DeepEqual(ValidPaths, tt.want) {
-				t.Errorf("ValidPaths = %v, want %v", ValidPaths, tt.want)
+			if !reflect.DeepEqual(pkg.ValidPaths, tt.want) {
+				t.Errorf("ValidPaths = %v, want %v", pkg.ValidPaths, tt.want)
 			}
 		})
 	}

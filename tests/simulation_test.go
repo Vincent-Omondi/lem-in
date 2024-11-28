@@ -1,10 +1,12 @@
 // simulator.go
-package pkg
+package tests
 
 import (
 	"bytes"
 	"os"
 	"testing"
+
+	"github.com/Vincent-Omondi/lem-in/pkg"
 )
 
 func TestControlTraffic(t *testing.T) {
@@ -21,7 +23,7 @@ func TestControlTraffic(t *testing.T) {
 			name: "Single path with single ant",
 			args: args{
 				antGroups: [][]string{{"ant1"}},
-				paths:     [][]string{{"start", "room1", "room2", EndRoom}},
+				paths:     [][]string{{"start", "room1", "room2", pkg.EndRoom}},
 			},
 			expectedOut: "", // Adjust this output based on expected behavior
 		},
@@ -30,8 +32,8 @@ func TestControlTraffic(t *testing.T) {
 			args: args{
 				antGroups: [][]string{{"ant1"}, {"ant2"}},
 				paths: [][]string{
-					{"start", "room1", "room2", EndRoom},
-					{"start", "roomA", "roomB", EndRoom},
+					{"start", "room1", "room2", pkg.EndRoom},
+					{"start", "roomA", "roomB", pkg.EndRoom},
 				},
 			},
 			expectedOut: "", // Adjust accordingly
@@ -40,7 +42,7 @@ func TestControlTraffic(t *testing.T) {
 			name: "Multiple ants on single path",
 			args: args{
 				antGroups: [][]string{{"ant1", "ant2", "ant3"}},
-				paths:     [][]string{{"start", "room1", "room2", "room3", EndRoom}},
+				paths:     [][]string{{"start", "room1", "room2", "room3", pkg.EndRoom}},
 			},
 			expectedOut: "",
 		},
@@ -52,8 +54,8 @@ func TestControlTraffic(t *testing.T) {
 					{"ant3", "ant4"},
 				},
 				paths: [][]string{
-					{"start", "room1", "room2", "room3", EndRoom},
-					{"start", "roomA", "roomB", "roomC", EndRoom},
+					{"start", "room1", "room2", "room3", pkg.EndRoom},
+					{"start", "roomA", "roomB", "roomC", pkg.EndRoom},
 				},
 			},
 			expectedOut: "",
@@ -67,9 +69,9 @@ func TestControlTraffic(t *testing.T) {
 					{"ant4", "ant5"},
 				},
 				paths: [][]string{
-					{"start", "room1", "room2", EndRoom},
-					{"start", "roomA", "roomB", "roomC", "roomD", EndRoom},
-					{"start", "room3", EndRoom},
+					{"start", "room1", "room2", pkg.EndRoom},
+					{"start", "roomA", "roomB", "roomC", "roomD", pkg.EndRoom},
+					{"start", "room3", pkg.EndRoom},
 				},
 			},
 			expectedOut: "",
@@ -78,9 +80,9 @@ func TestControlTraffic(t *testing.T) {
 
 	for _, tt := range tests {
 		// Before each test, reset AntsCount
-		AntsCount = 0
+		pkg.AntsCount = 0
 		for _, group := range tt.args.antGroups {
-			AntsCount += len(group)
+			pkg.AntsCount += len(group)
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
@@ -96,7 +98,7 @@ func TestControlTraffic(t *testing.T) {
 			os.Stdout = w
 
 			// Run the function
-			ControlTraffic(antGroupsCopy, tt.args.paths)
+			pkg.ControlTraffic(antGroupsCopy, tt.args.paths)
 
 			// Restore stdout
 			w.Close()
@@ -130,8 +132,8 @@ func TestDispatchAnts(t *testing.T) {
 			name: "Equal number of paths and ants",
 			args: args{
 				paths: [][]string{
-					{"start", "room1", "room2", EndRoom},
-					{"start", "roomA", "roomB", EndRoom},
+					{"start", "room1", "room2", pkg.EndRoom},
+					{"start", "roomA", "roomB", pkg.EndRoom},
 				},
 			},
 			antCount: 2,
@@ -140,9 +142,9 @@ func TestDispatchAnts(t *testing.T) {
 			name: "More paths than ants",
 			args: args{
 				paths: [][]string{
-					{"start", "room1", "room2", EndRoom},
-					{"start", "roomA", "roomB", EndRoom},
-					{"start", "roomX", "roomY", EndRoom},
+					{"start", "room1", "room2", pkg.EndRoom},
+					{"start", "roomA", "roomB", pkg.EndRoom},
+					{"start", "roomX", "roomY", pkg.EndRoom},
 				},
 			},
 			antCount:   3,
@@ -152,7 +154,7 @@ func TestDispatchAnts(t *testing.T) {
 			name: "Fewer paths than ants",
 			args: args{
 				paths: [][]string{
-					{"start", "room1", "room2", EndRoom},
+					{"start", "room1", "room2", pkg.EndRoom},
 				},
 			},
 			antCount: 5,
@@ -161,9 +163,9 @@ func TestDispatchAnts(t *testing.T) {
 			name: "Uneven distribution of ants",
 			args: args{
 				paths: [][]string{
-					{"start", "room1", "room2", EndRoom},
-					{"start", "roomA", "roomB", EndRoom},
-					{"start", "roomX", "roomY", EndRoom},
+					{"start", "room1", "room2", pkg.EndRoom},
+					{"start", "roomA", "roomB", pkg.EndRoom},
+					{"start", "roomX", "roomY", pkg.EndRoom},
 				},
 			},
 			antCount: 7,
@@ -172,7 +174,7 @@ func TestDispatchAnts(t *testing.T) {
 			name: "Minimal paths",
 			args: args{
 				paths: [][]string{
-					{"start", EndRoom},
+					{"start", pkg.EndRoom},
 				},
 			},
 			antCount: 1,
@@ -182,9 +184,9 @@ func TestDispatchAnts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Save original AntsCount and restore after test
-			originalAntsCount := AntsCount
-			AntsCount = tt.antCount
-			defer func() { AntsCount = originalAntsCount }()
+			originalAntsCount := pkg.AntsCount
+			pkg.AntsCount = tt.antCount
+			defer func() { pkg.AntsCount = originalAntsCount }()
 
 			// Capture stdout to verify output
 			oldStdout := os.Stdout
@@ -192,7 +194,7 @@ func TestDispatchAnts(t *testing.T) {
 			os.Stdout = pipeW
 
 			// Run the function
-			DispatchAnts(tt.args.paths)
+			pkg.DispatchAnts(tt.args.paths)
 
 			// Close the pipe and restore stdout
 			pipeW.Close()
