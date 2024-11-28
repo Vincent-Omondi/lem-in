@@ -154,11 +154,11 @@ func SearchMax() [][]string {
 		TraverseGraph(node)
 		fmt.Println(ValidPaths)
 	}
-	sortSolutions()
+	SortSolutions()
 	return ValidPaths
 }
 
-func sortSolutions() {
+func SortSolutions() {
 	sort.Slice(ValidPaths, func(i, j int) bool {
 		// First, sort by the length of the solution
 		if len(ValidPaths[i]) != len(ValidPaths[j]) {
